@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ACC AR QR</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top, #0f172a, #020617);
+        color: #e5e7eb;
+      }
+      .card {
+        text-align: center;
+        padding: 1.5rem 1.6rem;
+        max-width: 520px;
+        background: rgba(15, 23, 42, 0.96);
+        border-radius: 1.2rem;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.9);
+      }
+      h1 {
+        margin-top: 0;
+        font-size: 1.4rem;
+      }
+      p {
+        font-size: 0.9rem;
+        color: #9ca3af;
+      }
+      a.button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0.8rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 999px;
+        text-decoration: none;
+        background: radial-gradient(circle at top left, #38bdf8, #2563eb);
+        color: #f9fafb;
+        font-size: 0.85rem;
+        font-weight: 500;
+        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>ACC AR QR Hub</h1>
+      <p>
+        Use the manager to upload GLB / USDZ models and generate QR codes. Anyone scanning a QR will
+        open the <code>view.html</code> page and see the model as a miniature in AR.
+      </p>
+      <a href="app.html" class="button">Open QR Manager</a>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>QR AR Model Manager</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <!-- Supabase JS v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- QR code library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Central config -->
+    <script src="config.js"></script>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top, #020617, #020617 40%, #000 100%);
+        color: #e5e7eb;
+      }
+      .shell {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 1.5rem 1.25rem 2.5rem;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.25rem;
+      }
+      .subtle {
+        font-size: 0.8rem;
+        color: #9ca3af;
+      }
+      .tag {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        border: 1px solid rgba(96, 165, 250, 0.7);
+        color: #bfdbfe;
+        background: rgba(15, 23, 42, 0.9);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+        gap: 1.2rem;
+      }
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .card {
+        background: rgba(15, 23, 42, 0.98);
+        border-radius: 1rem;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        padding: 1rem 1.1rem 1.1rem;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.9);
+      }
+      .card h2 {
+        font-size: 0.95rem;
+        margin: 0 0 0.5rem;
+      }
+      label {
+        display: block;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9ca3af;
+        margin-bottom: 0.25rem;
+      }
+      input[type="email"],
+      input[type="password"],
+      input[type="text"] {
+        width: 100%;
+        padding: 0.55rem 0.6rem;
+        border-radius: 0.6rem;
+        border: 1px solid rgba(148, 163, 184, 0.8);
+        background: rgba(15, 23, 42, 0.98);
+        color: #e5e7eb;
+        font-size: 0.85rem;
+      }
+      input:focus {
+        outline: none;
+        border-color: rgba(59, 130, 246, 0.95);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.8);
+      }
+      input[type="file"] {
+        display: block;
+        width: 100%;
+        font-size: 0.8rem;
+        color: #e5e7eb;
+        margin-top: 0.25rem;
+      }
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 0.55rem 1.1rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: radial-gradient(circle at top left, #38bdf8, #2563eb);
+        color: white;
+        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.7);
+        transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+      }
+      button:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.04);
+        box-shadow: 0 16px 38px rgba(37, 99, 235, 0.9);
+      }
+      button.secondary {
+        background: transparent;
+        color: #e5e7eb;
+        border: 1px solid rgba(148, 163, 184, 0.9);
+        box-shadow: none;
+      }
+      button.secondary:hover {
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.9);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: flex-end;
+      }
+      .row > div {
+        flex: 1 1 140px;
+      }
+      .small {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 0.4rem;
+      }
+      .small span {
+        color: #e5e7eb;
+      }
+      .status {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        margin-top: 0.4rem;
+      }
+      .status.error {
+        color: #fecaca;
+      }
+      .status.success {
+        color: #bbf7d0;
+      }
+      .list {
+        margin-top: 0.6rem;
+        max-height: 480px;
+        overflow: auto;
+        padding-right: 0.4rem;
+      }
+      .item {
+        border-radius: 0.75rem;
+        border: 1px solid rgba(30, 64, 175, 0.7);
+        padding: 0.6rem 0.7rem;
+        margin-bottom: 0.6rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+        gap: 0.5rem;
+        background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.35), transparent),
+          rgba(15, 23, 42, 0.96);
+      }
+      @media (max-width: 700px) {
+        .item {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .item h3 {
+        margin: 0 0 0.1rem;
+        font-size: 0.9rem;
+      }
+      .item-meta {
+        font-size: 0.75rem;
+        color: #9ca3af;
+      }
+      .item-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: center;
+        margin-top: 0.35rem;
+      }
+      .item-actions button {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.7rem;
+      }
+      .qr-wrapper {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .qr-box {
+        width: 120px;
+        height: 120px;
+        background: rgba(15, 23, 42, 0.96);
+        border-radius: 0.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.18rem 0.55rem;
+        border-radius: 999px;
+        border: 1px solid rgba(94, 234, 212, 0.6);
+        font-size: 0.7rem;
+        color: #a5f3fc;
+      }
+      .pill-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: #22c55e;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div>
+          <h1>QR AR Model Manager</h1>
+          <div class="subtle">
+            Upload GLB / USDZ → get a QR that opens the model in AR on any phone.
+          </div>
+        </div>
+        <span class="tag">Supabase • GitHub Pages</span>
+      </header>
+
+      <div class="grid">
+        <!-- LEFT: auth + upload -->
+        <section class="card">
+          <h2>1. Sign up / Sign in</h2>
+
+          <div id="authSection">
+            <div class="row" style="margin-bottom: 0.5rem;">
+              <div>
+                <label for="email">Email</label>
+                <input id="email" type="email" placeholder="you@company.com" />
+              </div>
+              <div>
+                <label for="password">Password</label>
+                <input id="password" type="password" placeholder="••••••••" />
+              </div>
+            </div>
+            <div class="row" style="margin-bottom: 0.4rem;">
+              <button id="signupBtn" type="button">Sign up</button>
+              <button id="loginBtn" type="button">Sign in</button>
+              <button id="logoutBtn" type="button" class="secondary">Sign out</button>
+            </div>
+            <div class="small">
+              Simple email + password. Disable email confirmation in Supabase if you want instant use.
+            </div>
+            <div id="authStatus" class="status" style="margin-top: 0.35rem;"></div>
+          </div>
+
+          <hr style="border-color: rgba(30, 64, 175, 0.6); margin: 0.9rem 0;" />
+
+          <h2>2. Upload a new model</h2>
+          <div id="uploadSection">
+            <div style="margin-bottom: 0.5rem;">
+              <label for="modelName">Model name</label>
+              <input id="modelName" type="text" placeholder="Battle Creek – Isolation Room 220 CLG" />
+            </div>
+
+            <div style="margin-bottom: 0.5rem;">
+              <label>GLB file (required)</label>
+              <input id="glbFile" type="file" accept=".glb" />
+            </div>
+
+            <div style="margin-bottom: 0.5rem;">
+              <label>USDZ file (optional, for iOS Quick Look)</label>
+              <input id="usdzFile" type="file" accept=".usdz" />
+            </div>
+
+            <div class="row" style="margin-top: 0.4rem;">
+              <button id="uploadBtn" type="button">Upload &amp; create QR</button>
+              <div class="pill" id="loginStatePill" style="display: none;">
+                <span class="pill-dot"></span>
+                <span id="userEmailLabel"></span>
+              </div>
+            </div>
+
+            <div class="small">
+              After upload, you’ll get a QR and a URL like:<br />
+              <span>…/view.html?id=abcd1234</span>
+            </div>
+
+            <div id="uploadStatus" class="status" style="margin-top: 0.55rem;"></div>
+          </div>
+        </section>
+
+        <!-- RIGHT: list of existing QRs -->
+        <section class="card">
+          <h2>3. Existing QR models</h2>
+          <div class="small">
+            These are models stored in Supabase. Anyone can scan their QR or open the viewer URL.
+          </div>
+          <div id="listStatus" class="status" style="margin-top: 0.4rem;">Sign in to load your models.</div>
+
+          <div id="modelsList" class="list"></div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      // Config from config.js (edit there only)
+      const { SUPABASE_URL, SUPABASE_ANON_KEY, VIEWER_BASE_URL } = window.APP_CONFIG;
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const emailInput = document.getElementById("email");
+      const passwordInput = document.getElementById("password");
+      const loginBtn = document.getElementById("loginBtn");
+      const signupBtn = document.getElementById("signupBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+            signupBtn.addEventListener("click", async () => {
+              const email = emailInput.value.trim();
+              const password = passwordInput.value;
+              if (!email || !password) {
+                setAuthStatus("Enter email and password.", "error");
+                return;
+              }
+              setAuthStatus("Creating account…");
+              const { data, error } = await supabaseClient.auth.signUp({ email, password });
+              if (error) {
+                setAuthStatus("Sign-up failed: " + error.message, "error");
+                return;
+              }
+              currentUser = data.user || (data.session ? data.session.user : null);
+              if (currentUser) {
+                setAuthStatus("Account ready: " + email, "success");
+                updateLoginUI();
+                loadModels();
+              } else {
+                setAuthStatus("Check email to confirm (if required).", "success");
+              }
+            });
+      const authStatus = document.getElementById("authStatus");
+      const loginStatePill = document.getElementById("loginStatePill");
+      const userEmailLabel = document.getElementById("userEmailLabel");
+
+      const modelNameInput = document.getElementById("modelName");
+      const glbInput = document.getElementById("glbFile");
+      const usdzInput = document.getElementById("usdzFile");
+      const uploadBtn = document.getElementById("uploadBtn");
+      const uploadStatus = document.getElementById("uploadStatus");
+
+      const listStatus = document.getElementById("listStatus");
+      const modelsList = document.getElementById("modelsList");
+
+      let currentUser = null;
+
+      function setAuthStatus(message, type = "") {
+        authStatus.textContent = message;
+        authStatus.classList.remove("error", "success");
+        if (type) authStatus.classList.add(type);
+      }
+
+      function setUploadStatus(message, type = "") {
+        uploadStatus.textContent = message;
+        uploadStatus.classList.remove("error", "success");
+        if (type) uploadStatus.classList.add(type);
+      }
+
+      function setListStatus(message, type = "") {
+        listStatus.textContent = message;
+        listStatus.classList.remove("error", "success");
+        if (type) listStatus.classList.add(type);
+      }
+
+      function updateLoginUI() {
+        if (currentUser) {
+          loginStatePill.style.display = "inline-flex";
+          userEmailLabel.textContent = currentUser.email || "Signed in";
+        } else {
+          loginStatePill.style.display = "none";
+          userEmailLabel.textContent = "";
+        }
+      }
+
+      async function refreshSession() {
+        const { data, error } = await supabaseClient.auth.getUser();
+        if (error) {
+          console.warn("No session", error.message);
+          currentUser = null;
+        } else {
+          currentUser = data.user ?? null;
+        }
+        updateLoginUI();
+        if (currentUser) {
+          setAuthStatus("Signed in as " + (currentUser.email || "user"), "success");
+          loadModels();
+        } else {
+          setAuthStatus("Not signed in.");
+          setListStatus("Sign in to load your models.");
+          modelsList.innerHTML = "";
+        }
+      }
+
+      loginBtn.addEventListener("click", async () => {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        if (!email || !password) {
+          setAuthStatus("Enter email and password.", "error");
+          return;
+        }
+
+        setAuthStatus("Signing in…");
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) {
+          console.error(error);
+          setAuthStatus("Sign-in failed: " + error.message, "error");
+          currentUser = null;
+        } else {
+          currentUser = data.user;
+          setAuthStatus("Signed in as " + email, "success");
+        }
+        updateLoginUI();
+        if (currentUser) loadModels();
+      });
+
+      logoutBtn.addEventListener("click", async () => {
+        await supabaseClient.auth.signOut();
+        currentUser = null;
+        updateLoginUI();
+        setAuthStatus("Signed out.");
+        setListStatus("Sign in to load your models.");
+        modelsList.innerHTML = "";
+      });
+
+      uploadBtn.addEventListener("click", async () => {
+        if (!currentUser) {
+          setUploadStatus("Sign in before uploading.", "error");
+          return;
+        }
+
+        const name = modelNameInput.value.trim();
+        const glbFile = glbInput.files[0];
+        const usdzFile = usdzInput.files[0] || null;
+
+        if (!name) {
+          setUploadStatus("Enter a model name.", "error");
+          return;
+        }
+
+        if (!glbFile) {
+          setUploadStatus("GLB file is required.", "error");
+          return;
+        }
+
+        setUploadStatus("Uploading files…");
+
+        try {
+          // Generate a short qr id
+          const qrId = crypto.randomUUID().slice(0, 8);
+
+          // Paths in Supabase storage bucket "models"
+          const basePath = `user_${currentUser.id}/${qrId}`;
+          const glbPath = `${basePath}.glb`;
+          const usdzPath = usdzFile ? `${basePath}.usdz` : null;
+
+          // Upload GLB
+          const { error: glbErr } = await supabaseClient.storage
+            .from("models")
+            .upload(glbPath, glbFile, {
+              cacheControl: "3600",
+              upsert: false,
+            });
+          if (glbErr) throw glbErr;
+
+          const glbPublic = supabaseClient.storage
+            .from("models")
+            .getPublicUrl(glbPath).data.publicUrl;
+
+          let usdzPublic = null;
+          if (usdzFile && usdzPath) {
+            const { error: usdzErr } = await supabaseClient.storage
+              .from("models")
+              .upload(usdzPath, usdzFile, {
+                cacheControl: "3600",
+                upsert: false,
+              });
+            if (usdzErr) throw usdzErr;
+
+            usdzPublic = supabaseClient.storage
+              .from("models")
+              .getPublicUrl(usdzPath).data.publicUrl;
+          }
+
+          // Insert row into qr_models
+          const { data, error: insertErr } = await supabaseClient
+            .from("qr_models")
+            .insert({
+              id: qrId,
+              owner_user_id: currentUser.id,
+              name,
+              glb_url: glbPublic,
+              usdz_url: usdzPublic,
+            })
+            .select()
+            .single();
+
+          if (insertErr) throw insertErr;
+
+          setUploadStatus("Uploaded and QR created.", "success");
+          modelNameInput.value = "";
+          glbInput.value = "";
+          usdzInput.value = "";
+          loadModels();
+        } catch (err) {
+          console.error(err);
+          setUploadStatus("Upload failed: " + err.message, "error");
+        }
+      });
+
+      async function loadModels() {
+        if (!currentUser) return;
+        setListStatus("Loading models…");
+
+        try {
+          const { data, error } = await supabaseClient
+            .from("qr_models")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+          if (error) throw error;
+
+          if (!data || data.length === 0) {
+            setListStatus("No models created yet.");
+            modelsList.innerHTML = "";
+            return;
+          }
+
+          setListStatus(`Showing ${data.length} model(s).`, "success");
+          renderModels(data);
+        } catch (err) {
+          console.error(err);
+          setListStatus("Failed to load models: " + err.message, "error");
+          modelsList.innerHTML = "";
+        }
+      }
+
+      function renderModels(models) {
+        modelsList.innerHTML = "";
+        models.forEach((row) => {
+          const viewerUrl = `${VIEWER_BASE_URL}?id=${encodeURIComponent(row.id)}`;
+
+          const item = document.createElement("div");
+          item.className = "item";
+
+          const left = document.createElement("div");
+          const title = document.createElement("h3");
+          title.textContent = row.name || "(unnamed model)";
+          const meta = document.createElement("div");
+          meta.className = "item-meta";
+          const dateStr = row.created_at
+            ? new Date(row.created_at).toLocaleString()
+            : "";
+          meta.textContent = `QR id: ${row.id} • Created: ${dateStr}`;
+
+          const actions = document.createElement("div");
+          actions.className = "item-actions";
+
+          const urlBtn = document.createElement("button");
+          urlBtn.type = "button";
+          urlBtn.className = "secondary";
+          urlBtn.textContent = "Copy viewer URL";
+          urlBtn.addEventListener("click", async () => {
+            try {
+              await navigator.clipboard.writeText(viewerUrl);
+              setListStatus("Viewer URL copied to clipboard.", "success");
+            } catch (err) {
+              console.error(err);
+              setListStatus("Unable to copy. You can copy from the URL label.", "error");
+            }
+          });
+
+          const urlLabel = document.createElement("div");
+          urlLabel.className = "small";
+          urlLabel.innerHTML = `Viewer URL: <span>${viewerUrl}</span>`;
+
+          const downloadBtn = document.createElement("button");
+          downloadBtn.type = "button";
+          downloadBtn.textContent = "Download QR";
+          downloadBtn.addEventListener("click", () => {
+            const canvas = item.querySelector(".qr-box canvas");
+            if (!canvas) return;
+            const link = document.createElement("a");
+            link.href = canvas.toDataURL("image/png");
+            link.download = `qr-${row.id}.png`;
+            link.click();
+          });
+
+          actions.appendChild(urlBtn);
+          actions.appendChild(downloadBtn);
+
+          left.appendChild(title);
+          left.appendChild(meta);
+          left.appendChild(actions);
+          left.appendChild(urlLabel);
+
+          const right = document.createElement("div");
+          right.className = "qr-wrapper";
+          const qrBox = document.createElement("div");
+          qrBox.className = "qr-box";
+          qrBox.id = `qr-${row.id}`;
+          right.appendChild(qrBox);
+
+          item.appendChild(left);
+          item.appendChild(right);
+          modelsList.appendChild(item);
+
+          // Render QR code into qrBox
+          new QRCode(qrBox, {
+            text: viewerUrl,
+            width: 110,
+            height: 110,
+          });
+        });
+      }
+
+      // On load, try to restore existing session
+      refreshSession();
+    </script>
+  </body>
+</html>
