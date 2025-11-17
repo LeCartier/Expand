@@ -282,14 +282,10 @@
             </div>
 
             <div style="margin-bottom: 0.5rem;">
-              <label>GLB file (required)</label>
-              <input id="glbFile" type="file" accept=".glb" />
+              <label>Model file (GLB or USDZ)</label>
+              <input id="glbFile" type="file" accept=".glb,.usdz" />
             </div>
-
-            <div style="margin-bottom: 0.5rem;">
-              <label>USDZ file (optional, for iOS Quick Look)</label>
-              <input id="usdzFile" type="file" accept=".usdz" />
-            </div>
+            <div class="small">Either a GLB or a USDZ is required. If you upload both, the app will store both.</div>
 
             <div class="row" style="margin-top: 0.4rem;">
               <button id="uploadBtn" type="button">Upload &amp; create QR</button>
@@ -359,7 +355,6 @@
 
       const modelNameInput = document.getElementById("modelName");
       const glbInput = document.getElementById("glbFile");
-      const usdzInput = document.getElementById("usdzFile");
       const uploadBtn = document.getElementById("uploadBtn");
       const uploadStatus = document.getElementById("uploadStatus");
 
@@ -456,16 +451,17 @@
         }
 
         const name = modelNameInput.value.trim();
-        const glbFile = glbInput.files[0];
-        const usdzFile = usdzInput.files[0] || null;
+        const files = Array.from(glbInput.files || []);
+        const glbFile = files.find((f) => f.name.toLowerCase().endsWith('.glb')) || null;
+        const usdzFile = files.find((f) => f.name.toLowerCase().endsWith('.usdz')) || null;
 
         if (!name) {
           setUploadStatus("Enter a model name.", "error");
           return;
         }
 
-        if (!glbFile) {
-          setUploadStatus("GLB file is required.", "error");
+        if (!glbFile && !usdzFile) {
+          setUploadStatus("Please select at least one model file (.glb or .usdz).", "error");
           return;
         }
 
@@ -477,23 +473,24 @@
 
           // Paths in Supabase storage bucket "models"
           const basePath = `user_${currentUser.id}/${qrId}`;
-          const glbPath = `${basePath}.glb`;
+          const glbPath = glbFile ? `${basePath}.glb` : null;
           const usdzPath = usdzFile ? `${basePath}.usdz` : null;
 
-          // Upload GLB
-          const { error: glbErr } = await supabaseClient.storage
-            .from("models")
-            .upload(glbPath, glbFile, {
-              cacheControl: "3600",
-              upsert: false,
-            });
-          if (glbErr) throw glbErr;
-
-          const glbPublic = supabaseClient.storage
-            .from("models")
-            .getPublicUrl(glbPath).data.publicUrl;
-
+          let glbPublic = null;
           let usdzPublic = null;
+
+          if (glbFile && glbPath) {
+            const { error: glbErr } = await supabaseClient.storage
+              .from("models")
+              .upload(glbPath, glbFile, {
+                cacheControl: "3600",
+                upsert: false,
+              });
+            if (glbErr) throw glbErr;
+
+            glbPublic = supabaseClient.storage.from("models").getPublicUrl(glbPath).data.publicUrl;
+          }
+
           if (usdzFile && usdzPath) {
             const { error: usdzErr } = await supabaseClient.storage
               .from("models")
@@ -503,9 +500,7 @@
               });
             if (usdzErr) throw usdzErr;
 
-            usdzPublic = supabaseClient.storage
-              .from("models")
-              .getPublicUrl(usdzPath).data.publicUrl;
+            usdzPublic = supabaseClient.storage.from("models").getPublicUrl(usdzPath).data.publicUrl;
           }
 
           // Insert row into qr_models
@@ -517,6 +512,7 @@
               name,
               glb_url: glbPublic,
               usdz_url: usdzPublic,
+              source_type: glbPublic && usdzPublic ? 'both' : glbPublic ? 'glb' : 'usdz'
             })
             .select()
             .single();

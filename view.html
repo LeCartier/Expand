@@ -183,8 +183,8 @@
 
           const { name, glb_url, usdz_url } = data;
 
-          if (!glb_url) {
-            statusEl.textContent = "Model is missing a GLB file.";
+          if (!glb_url && !usdz_url) {
+            statusEl.textContent = "No usable model file (GLB or USDZ) is available.";
             statusEl.classList.add("error");
             nameEl.textContent = name || "Model";
             return;
@@ -192,16 +192,22 @@
 
           nameEl.textContent = name || "Model";
           hintEl.textContent = `QR id: ${qrId}`;
-          arViewer.src = glb_url;
 
-          if (usdz_url) {
+          // Prefer GLB for model-viewer; if only USDZ is available, set ios-src and a tiny fallback
+          if (glb_url) {
+            arViewer.src = glb_url;
+            if (usdz_url) arViewer.setAttribute("ios-src", usdz_url);
+          } else if (usdz_url) {
+            // model-viewer can use ios-src for quick look, but some browsers need a src too.
+            // For USDZ-only, set src to the usdz (model-viewer will handle ios quick look on iOS)
+            arViewer.src = usdz_url;
             arViewer.setAttribute("ios-src", usdz_url);
           }
 
           statusEl.innerHTML =
             "Loaded <span>" +
             (name || qrId) +
-            "</span>. Tap “View on floor in AR” on your phone.";
+            "</span>. Tap \"View on floor in AR\" on your phone.";
         } catch (err) {
           console.error(err);
           statusEl.textContent = "Unexpected error loading model.";
