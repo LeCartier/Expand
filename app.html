@@ -340,14 +340,26 @@
                 setAuthStatus("Sign-up failed: " + error.message, "error");
                 return;
               }
-              currentUser = data.user || (data.session ? data.session.user : null);
-              if (currentUser) {
+
+              // If signUp returned a session, use it. Otherwise attempt sign-in (useful when confirmation is disabled).
+              if (data.session && data.session.user) {
+                currentUser = data.session.user;
                 setAuthStatus("Account ready: " + email, "success");
-                updateLoginUI();
-                loadModels();
-              } else {
-                setAuthStatus("Check email to confirm (if required).", "success");
+              } else if (data.user) {
+                // Some flows return user but no session; try signing in to get a session.
+                const { data: signinData, error: signinError } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (signinError) {
+                  // Still proceed but inform user to check email if confirmation required
+                  setAuthStatus("Sign-up created. Check email to confirm (if required).", "success");
+                  currentUser = null;
+                } else {
+                  currentUser = signinData.user;
+                  setAuthStatus("Signed in: " + email, "success");
+                }
               }
+
+              updateLoginUI();
+              if (currentUser) loadModels();
             });
       const authStatus = document.getElementById("authStatus");
       const loginStatePill = document.getElementById("loginStatePill");
@@ -526,7 +538,13 @@
           loadModels();
         } catch (err) {
           console.error(err);
-          setUploadStatus("Upload failed: " + err.message, "error");
+          // Detect common RLS error text
+          const msg = err?.message || String(err);
+          if (msg.includes('row-level security') || msg.includes('permission denied') || msg.includes('violates')) {
+            setUploadStatus("Upload failed: row-level security (RLS) prevented the insert. Check table policies allowing inserts by the signed-in user.", "error");
+          } else {
+            setUploadStatus("Upload failed: " + msg, "error");
+          }
         }
       });
 
