@@ -696,11 +696,12 @@
           item.appendChild(right);
           modelsList.appendChild(item);
 
-          // Render QR code into qrBox, then overlay center marker image
+          // Render QR code into qrBox as a canvas, then overlay center marker image
           const qr = new QRCode(qrBox, {
             text: viewerUrl,
             width: 110,
             height: 110,
+            render: "canvas",
           });
 
           // After a short delay, draw the marker PNG in the center of the QR
@@ -712,7 +713,7 @@
             if (!ctx) return;
 
             const img = new Image();
-            img.src = 'pattern-FFE+Letters+Only.png';
+            img.src = './pattern-FFE+Letters+Only.png';
             img.onload = () => {
               const size = Math.floor(canvas.width * 0.4); // 40% of QR size
               const x = (canvas.width - size) / 2;

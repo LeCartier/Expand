@@ -157,7 +157,11 @@
         const camera = new THREE.Camera();
         scene.add(camera);
 
-        const arSource = new THREEx.ArToolkitSource({ sourceType: 'webcam' });
+        const arSource = new THREEx.ArToolkitSource({
+          sourceType: 'webcam',
+          // Prefer the rear camera on mobile/iOS
+          facingMode: 'environment',
+        });
         arSource.init(function onReady() {
           onResize();
         });
