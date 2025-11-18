@@ -625,8 +625,52 @@
             link.click();
           });
 
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.className = "secondary";
+          deleteBtn.textContent = "Delete";
+          deleteBtn.addEventListener("click", async () => {
+            if (!confirm("Delete this model and its QR? This cannot be undone.")) return;
+
+            try {
+              setListStatus("Deleting model…");
+
+              const basePath = `user_${row.owner_user_id}/${row.id}`;
+              const objectsToRemove = [];
+              if (row.glb_url) objectsToRemove.push(`${basePath}.glb`);
+              if (row.usdz_url) objectsToRemove.push(`${basePath}.usdz`);
+
+              if (objectsToRemove.length > 0) {
+                const { error: storageErr } = await supabaseClient.storage
+                  .from("models")
+                  .remove(objectsToRemove);
+                if (storageErr) throw storageErr;
+              }
+
+              const { error: deleteErr } = await supabaseClient
+                .from("qr_models")
+                .delete()
+                .eq("id", row.id)
+                .eq("owner_user_id", currentUser.id);
+
+              if (deleteErr) throw deleteErr;
+
+              setListStatus("Model deleted.", "success");
+              loadModels();
+            } catch (err) {
+              console.error(err);
+              const msg = err?.message || String(err);
+              if (msg.includes("row-level security") || msg.includes("permission denied") || msg.includes("violates")) {
+                setListStatus("Delete failed: row-level security (RLS) prevented the operation. Check table/storage policies.", "error");
+              } else {
+                setListStatus("Delete failed: " + msg, "error");
+              }
+            }
+          });
+
           actions.appendChild(urlBtn);
           actions.appendChild(downloadBtn);
+          actions.appendChild(deleteBtn);
 
           left.appendChild(title);
           left.appendChild(meta);
