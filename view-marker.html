@@ -163,7 +163,7 @@
           });
 
           arSource.init(function onReady() {
-            console.log('Marker AR - arSource ready:', arSource.ready);
+            console.log('Marker AR - arSource init callback, ready:', arSource.ready);
             onResize();
           });
 
@@ -188,7 +188,7 @@
           // Watchdog: if context never initializes, show an error
           setTimeout(() => {
             if (!contextInitialized) {
-              statusEl.textContent = 'AR init failed. Check camera permission and network, or use normal AR.';
+              statusEl.textContent = 'AR init failed: tracking context never initialized. Check camera permission and network, or use normal AR.';
               statusEl.classList.add('error');
             }
           }, 7000);
@@ -219,7 +219,8 @@
           animate();
         } catch (err) {
           console.error('Marker AR - unexpected error:', err);
-          statusEl.textContent = 'Unexpected error in marker AR. Use the normal AR button.';
+          const msg = err && err.message ? err.message : String(err);
+          statusEl.textContent = 'Marker AR error: ' + msg;
           statusEl.classList.add('error');
         }
       }
