@@ -34,6 +34,7 @@
         align-items: center;
         background: linear-gradient(to bottom, rgba(15,23,42,0.9), transparent);
         pointer-events: none;
+        z-index: 10;
       }
       #overlay h1 {
         margin: 0;
@@ -57,6 +58,7 @@
         cursor: pointer;
         box-shadow: 0 8px 20px rgba(0,0,0,0.5);
         pointer-events: auto;
+        z-index: 10;
       }
       #backBtn:hover {
         filter: brightness(1.1);
@@ -133,82 +135,93 @@
       }
 
       async function startMarkerAr() {
-        const qrId = getIdFromQuery();
-        const meta = await loadModelMeta(qrId);
-        if (!meta) return;
+        try {
+          const qrId = getIdFromQuery();
+          console.log('Marker AR - qrId:', qrId);
+          const meta = await loadModelMeta(qrId);
+          console.log('Marker AR - meta:', meta);
+          if (!meta) return;
 
-        // NOTE: This is a placeholder. Implementing full marker-based 3D model loading
-        // with AR.js requires setting up a Three.js scene, camera, renderer, and using
-        // a compatible model format/loader (e.g., GLTFLoader) plus a marker pattern.
-        // Here we only show the live camera feed with a basic AR.js setup skeleton.
+          statusEl.textContent = 'Initializing marker-based AR…';
 
-        statusEl.textContent = 'Initializing marker-based AR…';
+          // Create AR.js source (camera) and context
+          const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderer.setPixelRatio(window.devicePixelRatio);
+          renderer.domElement.style.position = 'absolute';
+          renderer.domElement.style.top = '0';
+          renderer.domElement.style.left = '0';
+          document.body.appendChild(renderer.domElement);
 
-        // Create AR.js source (camera) and context
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.domElement.style.position = 'absolute';
-        renderer.domElement.style.top = '0';
-        renderer.domElement.style.left = '0';
-        document.body.appendChild(renderer.domElement);
+          const scene = new THREE.Scene();
+          const camera = new THREE.Camera();
+          scene.add(camera);
 
-        const scene = new THREE.Scene();
-        const camera = new THREE.Camera();
-        scene.add(camera);
+          const arSource = new THREEx.ArToolkitSource({
+            sourceType: 'webcam',
+            // Start with default constraints; AR.js will pick a camera
+          });
 
-        const arSource = new THREEx.ArToolkitSource({
-          sourceType: 'webcam',
-          // Prefer the rear camera on mobile/iOS
-          facingMode: 'environment',
-        });
-        arSource.init(function onReady() {
-          onResize();
-        });
+          arSource.init(function onReady() {
+            console.log('Marker AR - arSource ready:', arSource.ready);
+            onResize();
+          });
 
-        window.addEventListener('resize', onResize);
-        function onResize() {
-          arSource.onResizeElement();
-          arSource.copyElementSizeTo(renderer.domElement);
-        }
-
-        const arContext = new THREEx.ArToolkitContext({
-          cameraParametersUrl: 'https://raw.githack.com/AR-js-org/AR.js/master/three.js/data/camera_para.dat',
-          detectionMode: 'mono',
-        });
-
-        arContext.init(function onCompleted() {
-          camera.projectionMatrix.copy(arContext.getProjectionMatrix());
-        });
-
-        // Marker controls: currently use a generic pattern marker.
-        // To truly use the QR image as a marker, you would need to
-        // generate a pattern file that matches your QR or use an
-        // image-tracking solution; AR.js by default expects specific markers.
-        const markerRoot = new THREE.Group();
-        scene.add(markerRoot);
-        const markerControls = new THREEx.ArMarkerControls(arContext, markerRoot, {
-          type: 'pattern',
-          patternUrl: 'pattern-FFE+Letters+Only.patt',
-        });
-
-        // Simple placeholder object so we can confirm tracking: a cube.
-        const cubeGeo = new THREE.BoxGeometry(1, 1, 1);
-        const cubeMat = new THREE.MeshNormalMaterial();
-        const cube = new THREE.Mesh(cubeGeo, cubeMat);
-        cube.position.y = 0.5;
-        markerRoot.add(cube);
-
-        statusEl.textContent = 'Point your camera at the bullseye marker next to the QR.';
-
-        function animate() {
-          requestAnimationFrame(animate);
-          if (arSource.ready) {
-            arContext.update(arSource.domElement);
+          window.addEventListener('resize', onResize);
+          function onResize() {
+            arSource.onResizeElement();
+            arSource.copyElementSizeTo(renderer.domElement);
           }
-          renderer.render(scene, camera);
+
+          const arContext = new THREEx.ArToolkitContext({
+            cameraParametersUrl: 'https://raw.githack.com/AR-js-org/AR.js/master/three.js/data/camera_para.dat',
+            detectionMode: 'mono',
+          });
+
+          let contextInitialized = false;
+          arContext.init(function onCompleted() {
+            contextInitialized = true;
+            console.log('Marker AR - arContext initialized');
+            camera.projectionMatrix.copy(arContext.getProjectionMatrix());
+          });
+
+          // Watchdog: if context never initializes, show an error
+          setTimeout(() => {
+            if (!contextInitialized) {
+              statusEl.textContent = 'AR init failed. Check camera permission and network, or use normal AR.';
+              statusEl.classList.add('error');
+            }
+          }, 7000);
+
+          const markerRoot = new THREE.Group();
+          scene.add(markerRoot);
+          const markerControls = new THREEx.ArMarkerControls(arContext, markerRoot, {
+            type: 'pattern',
+            patternUrl: 'pattern-FFE+Letters+Only.patt',
+          });
+
+          // Simple placeholder object so we can confirm tracking: a cube.
+          const cubeGeo = new THREE.BoxGeometry(1, 1, 1);
+          const cubeMat = new THREE.MeshNormalMaterial();
+          const cube = new THREE.Mesh(cubeGeo, cubeMat);
+          cube.position.y = 0.5;
+          markerRoot.add(cube);
+
+          statusEl.textContent = 'Point your camera at the bullseye marker next to the QR.';
+
+          function animate() {
+            requestAnimationFrame(animate);
+            if (arSource.ready && contextInitialized) {
+              arContext.update(arSource.domElement);
+            }
+            renderer.render(scene, camera);
+          }
+          animate();
+        } catch (err) {
+          console.error('Marker AR - unexpected error:', err);
+          statusEl.textContent = 'Unexpected error in marker AR. Use the normal AR button.';
+          statusEl.classList.add('error');
         }
-        animate();
       }
 
       startMarkerAr();
