@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>QR Marker AR Viewer</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <!-- Three.js + AR.js for marker-based AR (experimental) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/three.js/build/ar-threex.min.js"></script>
+
+    <!-- Supabase JS v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Central config -->
+    <script src="config.js"></script>
+
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #000;
+        color: #e5e7eb;
+      }
+      #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 0.6rem 0.9rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(to bottom, rgba(15,23,42,0.9), transparent);
+        pointer-events: none;
+      }
+      #overlay h1 {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+      #overlay .status {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        text-align: right;
+      }
+      #backBtn {
+        position: fixed;
+        left: 0.7rem;
+        bottom: 0.7rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 999px;
+        border: none;
+        background: rgba(15,23,42,0.9);
+        color: #e5e7eb;
+        font-size: 0.75rem;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        pointer-events: auto;
+      }
+      #backBtn:hover {
+        filter: brightness(1.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="overlay">
+      <h1 id="title">Marker AR</h1>
+      <div class="status" id="status">Point your camera at the printed QR code.</div>
+    </div>
+    <button id="backBtn" type="button">Back to viewer</button>
+
+    <script>
+      // Config from config.js
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG;
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const statusEl = document.getElementById('status');
+      const titleEl = document.getElementById('title');
+      const backBtn = document.getElementById('backBtn');
+
+      backBtn.addEventListener('click', () => {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id') || '';
+        const url = id ? `view.html?id=${encodeURIComponent(id)}` : 'view.html';
+        window.location.href = url;
+      });
+
+      function getIdFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const raw = params.get('id');
+        return raw ? raw.trim() : '';
+      }
+
+      async function loadModelMeta(qrId) {
+        try {
+          if (!qrId) {
+            statusEl.textContent = 'Missing id parameter in URL.';
+            return null;
+          }
+          statusEl.textContent = 'Looking up model info…';
+
+          const { data, error } = await supabaseClient
+            .from('qr_models')
+            .select('name, glb_url, usdz_url')
+            .eq('id', qrId)
+            .maybeSingle();
+
+          if (error) {
+            console.error(error);
+            statusEl.textContent = 'Failed to query Supabase.';
+            return null;
+          }
+          if (!data) {
+            statusEl.textContent = 'No model associated with this QR id.';
+            return null;
+          }
+          const { name, glb_url, usdz_url } = data;
+          titleEl.textContent = name || 'Marker AR';
+
+          const src = glb_url || usdz_url;
+          if (!src) {
+            statusEl.textContent = 'No usable GLB/USDZ URL found.';
+            return null;
+          }
+
+          return { name, src };
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = 'Unexpected error loading model info.';
+          return null;
+        }
+      }
+
+      async function startMarkerAr() {
+        const qrId = getIdFromQuery();
+        const meta = await loadModelMeta(qrId);
+        if (!meta) return;
+
+        // NOTE: This is a placeholder. Implementing full marker-based 3D model loading
+        // with AR.js requires setting up a Three.js scene, camera, renderer, and using
+        // a compatible model format/loader (e.g., GLTFLoader) plus a marker pattern.
+        // Here we only show the live camera feed with a basic AR.js setup skeleton.
+
+        statusEl.textContent = 'Initializing marker-based AR…';
+
+        // Create AR.js source (camera) and context
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.domElement.style.position = 'absolute';
+        renderer.domElement.style.top = '0';
+        renderer.domElement.style.left = '0';
+        document.body.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.Camera();
+        scene.add(camera);
+
+        const arSource = new THREEx.ArToolkitSource({ sourceType: 'webcam' });
+        arSource.init(function onReady() {
+          onResize();
+        });
+
+        window.addEventListener('resize', onResize);
+        function onResize() {
+          arSource.onResizeElement();
+          arSource.copyElementSizeTo(renderer.domElement);
+        }
+
+        const arContext = new THREEx.ArToolkitContext({
+          cameraParametersUrl: 'https://raw.githack.com/AR-js-org/AR.js/master/three.js/data/camera_para.dat',
+          detectionMode: 'mono',
+        });
+
+        arContext.init(function onCompleted() {
+          camera.projectionMatrix.copy(arContext.getProjectionMatrix());
+        });
+
+        // Marker controls: currently use a generic pattern marker.
+        // To truly use the QR image as a marker, you would need to
+        // generate a pattern file that matches your QR or use an
+        // image-tracking solution; AR.js by default expects specific markers.
+        const markerRoot = new THREE.Group();
+        scene.add(markerRoot);
+        const markerControls = new THREEx.ArMarkerControls(arContext, markerRoot, {
+          type: 'pattern',
+          patternUrl: 'pattern-FFE+Letters+Only.patt',
+        });
+
+        // Simple placeholder object so we can confirm tracking: a cube.
+        const cubeGeo = new THREE.BoxGeometry(1, 1, 1);
+        const cubeMat = new THREE.MeshNormalMaterial();
+        const cube = new THREE.Mesh(cubeGeo, cubeMat);
+        cube.position.y = 0.5;
+        markerRoot.add(cube);
+
+        statusEl.textContent = 'Point your camera at the bullseye marker next to the QR.';
+
+        function animate() {
+          requestAnimationFrame(animate);
+          if (arSource.ready) {
+            arContext.update(arSource.domElement);
+          }
+          renderer.render(scene, camera);
+        }
+        animate();
+      }
+
+      startMarkerAr();
+    </script>
+  </body>
+</html>

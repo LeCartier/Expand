@@ -109,6 +109,11 @@
         <span class="tag">QR • AR mini</span>
       </header>
 
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 0.6rem; flex-wrap: wrap;">
+        <button id="freeArBtn" type="button">Free placement AR</button>
+        <button id="markerArBtn" type="button" class="secondary">Pin to QR (marker)</button>
+      </div>
+
       <model-viewer
         id="arViewer"
         camera-controls
@@ -141,6 +146,8 @@
       const nameEl = document.getElementById("modelName");
       const hintEl = document.getElementById("locationHint");
       const arViewer = document.getElementById("arViewer");
+      const freeArBtn = document.getElementById("freeArBtn");
+      const markerArBtn = document.getElementById("markerArBtn");
 
       function getIdFromQuery() {
         const params = new URLSearchParams(window.location.search);
@@ -218,6 +225,28 @@
 
       const qrId = getIdFromQuery();
       loadModelForQrId(qrId);
+
+      // Free placement AR: delegate to model-viewer's built-in AR button
+      freeArBtn.addEventListener("click", () => {
+        const arButton = arViewer.shadowRoot?.querySelector("button[slot='ar-button']") || arViewer.querySelector("button[slot='ar-button']");
+        if (arButton) {
+          arButton.click();
+        } else {
+          statusEl.textContent = "AR button not available on this device.";
+          statusEl.classList.add("error");
+        }
+      });
+
+      // Marker-based AR: open separate marker viewer (to be implemented) with same id
+      markerArBtn.addEventListener("click", () => {
+        if (!qrId) {
+          statusEl.textContent = "No QR id in URL to open marker view.";
+          statusEl.classList.add("error");
+          return;
+        }
+        const url = `view-marker.html?id=${encodeURIComponent(qrId)}`;
+        window.location.href = url;
+      });
     </script>
   </body>
 </html>

@@ -688,12 +688,30 @@
           item.appendChild(right);
           modelsList.appendChild(item);
 
-          // Render QR code into qrBox
-          new QRCode(qrBox, {
+          // Render QR code into qrBox, then overlay center marker image
+          const qr = new QRCode(qrBox, {
             text: viewerUrl,
             width: 110,
             height: 110,
           });
+
+          // After a short delay, draw the marker PNG in the center of the QR
+          setTimeout(() => {
+            const canvas = qrBox.querySelector('canvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const img = new Image();
+            img.src = 'pattern-FFE+Letters+Only.png';
+            img.onload = () => {
+              const size = Math.floor(canvas.width * 0.4); // 40% of QR size
+              const x = (canvas.width - size) / 2;
+              const y = (canvas.height - size) / 2;
+              ctx.drawImage(img, x, y, size, size);
+            };
+          }, 100);
         });
       }
 
