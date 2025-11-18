@@ -635,10 +635,18 @@
             try {
               setListStatus("Deleting model…");
 
-              const basePath = `user_${row.owner_user_id}/${row.id}`;
-              const objectsToRemove = [];
-              if (row.glb_url) objectsToRemove.push(`${basePath}.glb`);
-              if (row.usdz_url) objectsToRemove.push(`${basePath}.usdz`);
+              const prefix = `user_${row.owner_user_id}/${row.id}`;
+
+              // List all objects for this model prefix and remove them
+              const { data: listed, error: listErr } = await supabaseClient.storage
+                .from("models")
+                .list("", { search: prefix });
+
+              if (listErr) throw listErr;
+
+              const objectsToRemove = (listed || [])
+                .map((o) => o.name)
+                .filter((name) => name.startsWith(prefix));
 
               if (objectsToRemove.length > 0) {
                 const { error: storageErr } = await supabaseClient.storage
