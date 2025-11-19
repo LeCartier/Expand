@@ -113,9 +113,8 @@
       >
         <a-entity
           id="model-entity"
-          position="0 0.5 0"
           rotation="0 0 0"
-          scale="0.5 0.5 0.5"
+          scale="1 1 1"
         >
         </a-entity>
       </a-marker>
@@ -195,12 +194,35 @@
           if (!modelEntity) return;
 
           modelEntity.setAttribute('gltf-model', meta.src);
-          modelEntity.setAttribute('scale', '0.5 0.5 0.5');
-          modelEntity.setAttribute('position', '0 0 0');
+          // initial neutral transform; we'll adjust on model-loaded
 
           modelEntity.addEventListener('model-loaded', () => {
             console.log('Marker model loaded');
-            statusEl.textContent = 'Point your camera at the printed marker.';
+
+            const object3D = modelEntity.getObject3D('mesh');
+            if (!object3D || typeof THREE === 'undefined') {
+              statusEl.textContent = 'Point your camera at the printed marker.';
+              return;
+            }
+
+            // Compute bounding box and scale to fit a 1 ft (~0.3048 m) cube
+            const box = new THREE.Box3().setFromObject(object3D);
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z) || 1;
+            const targetSize = 0.3048; // 1 foot in meters
+            const scaleFactor = targetSize / maxDim;
+
+            object3D.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+            // Recenter and place base on marker plane
+            const newBox = new THREE.Box3().setFromObject(object3D);
+            const center = newBox.getCenter(new THREE.Vector3());
+            const newSize = newBox.getSize(new THREE.Vector3());
+
+            object3D.position.sub(center);      // center at marker origin
+            object3D.position.y += newSize.y/2; // lift so base sits on marker
+
+            statusEl.textContent = 'Pinch and rotate to adjust the model.';
           });
 
           modelEntity.addEventListener('model-error', (e) => {
