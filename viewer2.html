@@ -1,0 +1,96 @@
+<script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
+<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+<!-- Supabase JS v2 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Central config -->
+<script src="config.js"></script>
+
+<style>
+  .arjs-loader {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .arjs-loader div {
+    text-align: center;
+    font-size: 1.25em;
+    color: white;
+  }
+</style>
+
+<body style="margin : 0px; overflow: hidden;">
+  <!-- minimal loader shown until image descriptors are loaded -->
+  <div class="arjs-loader">
+    <div>Loading, please wait...</div>
+  </div>
+  <a-scene
+    vr-mode-ui="enabled: false;"
+    renderer="logarithmicDepthBuffer: true;"
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam;debugUIEnabled: false;"
+  >
+    <a-nft
+      type="nft"
+      url="mark/pattern-FFE+Letters+Only"
+      smooth="true"
+      smoothCount="10"
+      smoothTolerance=".01"
+      smoothThreshold="5"
+    >
+      <a-entity
+        id="nft-model-entity"
+        rotation="0 0 0"
+        scale="5 5 5"
+        position="50 150 0"
+      >
+      </a-entity>
+    </a-nft>
+    <a-entity camera></a-entity>
+  </a-scene>
+  <script>
+    // Config from config.js
+    const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
+
+    if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      function getIdFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const raw = params.get('id');
+        return raw ? raw.trim() : '';
+      }
+
+      async function initNftModelFromSupabase() {
+        const qrId = getIdFromQuery();
+        if (!qrId) return;
+
+        try {
+          const { data, error } = await supabaseClient
+            .from('qr_models')
+            .select('glb_url')
+            .eq('id', qrId)
+            .maybeSingle();
+
+          if (error || !data || !data.glb_url) return;
+
+          const modelEntity = document.getElementById('nft-model-entity');
+          if (!modelEntity) return;
+
+          modelEntity.setAttribute('gltf-model', data.glb_url);
+        } catch (e) {
+          console.error('Error loading NFT model from Supabase', e);
+        }
+      }
+
+      initNftModelFromSupabase();
+    }
+  </script>
+</body>
