@@ -43,6 +43,7 @@
         font-size: 0.75rem;
         color: #9ca3af;
         text-align: right;
+        white-space: pre-line;
       }
       #backBtn {
         position: fixed;
@@ -160,7 +161,7 @@
 
           if (error) {
             console.error(error);
-            statusEl.textContent = 'Failed to query Supabase.';
+            statusEl.textContent = 'Failed to query Supabase.\n' + (error.message || 'Unknown error');
             return null;
           }
           if (!data) {
@@ -176,10 +177,11 @@
             return null;
           }
 
+          statusEl.textContent = 'Supabase OK. Using GLB URL:\n' + glb_url;
           return { name, src: glb_url, usdz_url };
         } catch (err) {
           console.error(err);
-          statusEl.textContent = 'Unexpected error loading model info.';
+          statusEl.textContent = 'Unexpected error loading model info.\n' + (err.message || String(err));
           return null;
         }
       }
@@ -201,7 +203,7 @@
 
             const object3D = modelEntity.getObject3D('mesh');
             if (!object3D || typeof THREE === 'undefined') {
-              statusEl.textContent = 'Point your camera at the printed marker.';
+              statusEl.textContent = 'Model loaded event fired, but mesh/THREE unavailable.';
               return;
             }
 
@@ -222,12 +224,13 @@
             object3D.position.sub(center);      // center at marker origin
             object3D.position.y += newSize.y/2; // lift so base sits on marker
 
-            statusEl.textContent = 'Pinch and rotate to adjust the model.';
+            statusEl.textContent = 'Model loaded and placed.\nPinch and rotate to adjust.';
           });
 
           modelEntity.addEventListener('model-error', (e) => {
             console.error('Marker model error:', e.detail);
-            statusEl.textContent = 'Error loading marker model (check GLB URL/CORS).';
+            const detail = e && e.detail ? JSON.stringify(e.detail) : 'No detail';
+            statusEl.textContent = 'Error loading marker model.\nCheck GLB URL/CORS.\nDetail: ' + detail;
           });
         });
       }
