@@ -171,13 +171,13 @@
           const { name, glb_url, usdz_url } = data;
           titleEl.textContent = name || 'Marker AR';
 
-          const src = glb_url || usdz_url;
-          if (!src) {
-            statusEl.textContent = 'No usable GLB/USDZ URL found.';
+          // Marker mode requires a GLB that A-Frame can load via gltf-model
+          if (!glb_url) {
+            statusEl.textContent = 'Marker mode requires a GLB model. Use normal AR for USDZ-only models.';
             return null;
           }
 
-          return { name, src };
+          return { name, src: glb_url, usdz_url };
         } catch (err) {
           console.error(err);
           statusEl.textContent = 'Unexpected error loading model info.';
@@ -198,9 +198,23 @@
           modelEntity.setAttribute('scale', '0.5 0.5 0.5');
           modelEntity.setAttribute('position', '0 0 0');
 
-          statusEl.textContent = 'Point your camera at the printed marker.';
+          modelEntity.addEventListener('model-loaded', () => {
+            console.log('Marker model loaded');
+            statusEl.textContent = 'Point your camera at the printed marker.';
+          });
+
+          modelEntity.addEventListener('model-error', (e) => {
+            console.error('Marker model error:', e.detail);
+            statusEl.textContent = 'Error loading marker model (check GLB URL/CORS).';
+          });
         });
       }
+
+      // Hide AR.js loader once the video source is ready
+      window.addEventListener('arjs-video-loaded', () => {
+        const loader = document.querySelector('.arjs-loader');
+        if (loader) loader.style.display = 'none';
+      });
 
       initAframeMarker();
     </script>
