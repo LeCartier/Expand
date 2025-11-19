@@ -1,17 +1,61 @@
 <html>
-  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <!-- we import arjs version without NFT but with marker + location based support -->
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <head>
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <!-- we import arjs version without NFT but with marker + location based support -->
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <!-- Supabase JS v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Central config -->
+    <script src="config.js"></script>
+  </head>
   <body style="margin : 0px; overflow: hidden;">
     <a-scene embedded arjs>
-      <a-marker preset="pattern" type="pattern" size=".25" url="https://github.com/LeCartier/Expand/blob/e04bef454b2e1612654a96148a1bee26f1041837/pattern-FFE%2BLetters%2BOnly.patt" emitevents="true">
+      <a-marker type="pattern" preset="custom" url="FFE.patt" emitevents="true">
         <a-entity
+          id="mark-model-entity"
           position="0 0 0"
           scale="0.05 0.05 0.05"
-          gltf-model="https://raw.githack.com/AR-js-org/AR.js/master/aframe/examples/image-tracking/nft/trex/scene.gltf"
         ></a-entity>
       </a-marker>
       <a-entity camera></a-entity>
     </a-scene>
+
+    <script>
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG || {};
+
+      if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function getIdFromQuery() {
+          const params = new URLSearchParams(window.location.search);
+          const raw = params.get('id');
+          return raw ? raw.trim() : '';
+        }
+
+        async function initMarkerModelFromSupabase() {
+          const qrId = getIdFromQuery();
+          if (!qrId) return;
+
+          try {
+            const { data, error } = await supabaseClient
+              .from('qr_models')
+              .select('glb_url')
+              .eq('id', qrId)
+              .maybeSingle();
+
+            if (error || !data || !data.glb_url) return;
+
+            const modelEntity = document.getElementById('mark-model-entity');
+            if (!modelEntity) return;
+
+            modelEntity.setAttribute('gltf-model', data.glb_url);
+          } catch (e) {
+            console.error('Error loading marker model from Supabase', e);
+          }
+        }
+
+        initMarkerModelFromSupabase();
+      }
+    </script>
   </body>
 </html>
