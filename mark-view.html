@@ -9,12 +9,13 @@
     <script src="config.js"></script>
   </head>
   <body style="margin : 0px; overflow: hidden;">
-    <a-scene embedded arjs>
-      <a-marker type="pattern" preset="custom" url="FFE.patt" emitevents="true">
+    <a-scene a-scene embedded arjs="sourceType: webcam; sourceWidth:1280; sourceHeight:960; displayWidth: 1280; displayHeight: 960;">
+      <a-marker type="pattern" preset="custom" url="FFE.patt" emitevents="true" smooth="true">
         <a-entity
           id="mark-model-entity"
           position="0 0 0"
-          scale="0.05 0.05 0.05"
+          scale="0.5 0.5 0.5"
+          touch-gestures
         ></a-entity>
       </a-marker>
       <a-entity camera></a-entity>
@@ -56,6 +57,88 @@
 
         initMarkerModelFromSupabase();
       }
+    </script>
+    <script>
+      // A-Frame component for basic touch gestures: drag to rotate, pinch to scale
+      AFRAME.registerComponent('touch-gestures', {
+        schema: {
+          minScale: { default: 0.1 },
+          maxScale: { default: 3.0 },
+          rotationFactor: { default: 0.5 }, // degrees per px
+          scaleFactor: { default: 0.005 }   // scale per px distance change
+        },
+        init: function () {
+          this.touchState = {
+            isDragging: false,
+            isPinching: false,
+            startRotationY: 0,
+            lastTouchX: 0,
+            startDistance: 0,
+            startScale: 1
+          };
+
+          const sceneEl = this.el.sceneEl;
+          this._onTouchStart = this.onTouchStart.bind(this);
+          this._onTouchMove = this.onTouchMove.bind(this);
+          this._onTouchEnd = this.onTouchEnd.bind(this);
+
+          sceneEl.canvas?.addEventListener('touchstart', this._onTouchStart, { passive: false });
+          sceneEl.canvas?.addEventListener('touchmove', this._onTouchMove, { passive: false });
+          sceneEl.canvas?.addEventListener('touchend', this._onTouchEnd, { passive: false });
+          sceneEl.canvas?.addEventListener('touchcancel', this._onTouchEnd, { passive: false });
+        },
+        remove: function () {
+          const sceneEl = this.el.sceneEl;
+          sceneEl.canvas?.removeEventListener('touchstart', this._onTouchStart);
+          sceneEl.canvas?.removeEventListener('touchmove', this._onTouchMove);
+          sceneEl.canvas?.removeEventListener('touchend', this._onTouchEnd);
+          sceneEl.canvas?.removeEventListener('touchcancel', this._onTouchEnd);
+        },
+        getTouches: function (e) {
+          return e.touches || e.changedTouches || [];
+        },
+        onTouchStart: function (e) {
+          const touches = this.getTouches(e);
+          if (touches.length === 1) {
+            this.touchState.isDragging = true;
+            this.touchState.isPinching = false;
+            this.touchState.lastTouchX = touches[0].clientX;
+            const rot = this.el.getAttribute('rotation') || { x: 0, y: 0, z: 0 };
+            this.touchState.startRotationY = rot.y;
+          } else if (touches.length === 2) {
+            this.touchState.isDragging = false;
+            this.touchState.isPinching = true;
+            this.touchState.startDistance = this.getDistance(touches[0], touches[1]);
+            const scale = this.el.getAttribute('scale') || { x: 1, y: 1, z: 1 };
+            this.touchState.startScale = scale.x; // uniform scale assumed
+          }
+        },
+        onTouchMove: function (e) {
+          const touches = this.getTouches(e);
+          if (this.touchState.isDragging && touches.length === 1) {
+            e.preventDefault();
+            const dx = touches[0].clientX - this.touchState.lastTouchX;
+            const rotY = this.touchState.startRotationY + dx * this.data.rotationFactor;
+            this.el.setAttribute('rotation', { x: 0, y: rotY, z: 0 });
+          } else if (this.touchState.isPinching && touches.length === 2) {
+            e.preventDefault();
+            const newDist = this.getDistance(touches[0], touches[1]);
+            const delta = newDist - this.touchState.startDistance;
+            let newScale = this.touchState.startScale + delta * this.data.scaleFactor;
+            newScale = Math.max(this.data.minScale, Math.min(this.data.maxScale, newScale));
+            this.el.setAttribute('scale', { x: newScale, y: newScale, z: newScale });
+          }
+        },
+        onTouchEnd: function () {
+          this.touchState.isDragging = false;
+          this.touchState.isPinching = false;
+        },
+        getDistance: function (t1, t2) {
+          const dx = t1.clientX - t2.clientX;
+          const dy = t1.clientY - t2.clientY;
+          return Math.sqrt(dx * dx + dy * dy);
+        }
+      });
     </script>
   </body>
 </html>
