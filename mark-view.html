@@ -156,12 +156,29 @@
                   z: -center.z * calculatedScale
                 });
                 
+                // Force visibility and rendering properties
+                modelEntity.setAttribute('visible', true);
+                if (mesh) {
+                  mesh.visible = true;
+                  mesh.traverse(function(child) {
+                    if (child.isMesh) {
+                      child.visible = true;
+                      child.frustumCulled = false; // Disable frustum culling
+                      if (child.material) {
+                        child.material.side = THREE.DoubleSide; // Render both sides
+                        child.material.needsUpdate = true;
+                      }
+                    }
+                  });
+                }
+                
                 console.log('Applied scale:', calculatedScale.toFixed(4));
                 console.log('Applied centering position:', 
                   (-center.x * calculatedScale).toFixed(4),
                   (-center.y * calculatedScale).toFixed(4),
                   (-center.z * calculatedScale).toFixed(4)
                 );
+                console.log('Forced visibility and disabled frustum culling');
                 console.log('Final model size will be ~2ft x 2ft x 2ft');
                 console.log('======================');
               } else {
