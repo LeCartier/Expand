@@ -120,20 +120,49 @@
               if (mesh) {
                 const box = new THREE.Box3().setFromObject(mesh);
                 const size = box.getSize(new THREE.Vector3());
-                console.log('Model dimensions:', size);
-                console.log('Current scale:', modelEntity.getAttribute('scale'));
+                const center = box.getCenter(new THREE.Vector3());
                 
-                // If model is very large, auto-adjust scale
+                console.log('=== MODEL DEBUG INFO ===');
+                console.log('Model dimensions (width, height, depth):', size.x.toFixed(3), size.y.toFixed(3), size.z.toFixed(3));
+                console.log('Model center offset:', center.x.toFixed(3), center.y.toFixed(3), center.z.toFixed(3));
+                console.log('Current position:', modelEntity.getAttribute('position'));
+                console.log('Current scale:', modelEntity.getAttribute('scale'));
+                console.log('Current rotation:', modelEntity.getAttribute('rotation'));
+                
+                // Calculate appropriate scale based on largest dimension
                 const maxDimension = Math.max(size.x, size.y, size.z);
-                if (maxDimension > 2) {
-                  const autoScale = 1.5 / maxDimension;
-                  console.log('Model is large, auto-adjusting scale to:', autoScale);
-                  modelEntity.setAttribute('scale', {
-                    x: autoScale,
-                    y: autoScale,
-                    z: autoScale
-                  });
-                }
+                console.log('Max dimension:', maxDimension.toFixed(3));
+                
+                // Target size: 1 unit (marker is typically 1 unit)
+                const targetSize = 1.0;
+                const calculatedScale = targetSize / maxDimension;
+                
+                console.log('Calculated scale needed:', calculatedScale.toFixed(3));
+                
+                // Apply the calculated scale
+                modelEntity.setAttribute('scale', {
+                  x: calculatedScale,
+                  y: calculatedScale,
+                  z: calculatedScale
+                });
+                
+                // Center the model if it has offset
+                // Move model so its center is at the marker origin
+                modelEntity.setAttribute('position', {
+                  x: -center.x * calculatedScale,
+                  y: -center.y * calculatedScale,
+                  z: -center.z * calculatedScale
+                });
+                
+                console.log('Applied scale:', calculatedScale.toFixed(3));
+                console.log('Applied centering position:', 
+                  (-center.x * calculatedScale).toFixed(3),
+                  (-center.y * calculatedScale).toFixed(3),
+                  (-center.z * calculatedScale).toFixed(3)
+                );
+                console.log('======================');
+              } else {
+                console.warn('No mesh found in model entity');
               }
             });
 
