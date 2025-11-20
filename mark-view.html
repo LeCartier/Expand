@@ -129,15 +129,17 @@
                 console.log('Current scale:', modelEntity.getAttribute('scale'));
                 console.log('Current rotation:', modelEntity.getAttribute('rotation'));
                 
-                // Calculate appropriate scale based on largest dimension
+                // Calculate appropriate scale to fit in 2ft x 2ft x 2ft box
                 const maxDimension = Math.max(size.x, size.y, size.z);
                 console.log('Max dimension:', maxDimension.toFixed(3));
                 
-                // Target size: 1 unit (marker is typically 1 unit)
-                const targetSize = 1.0;
+                // Target: 2 feet = 0.6096 meters in A-Frame units
+                // A-Frame uses meters by default, so 2 feet = 0.6096 meters
+                const targetSize = 0.6096; // 2 feet in meters
                 const calculatedScale = targetSize / maxDimension;
                 
-                console.log('Calculated scale needed:', calculatedScale.toFixed(3));
+                console.log('Target size (2 feet in meters):', targetSize.toFixed(4));
+                console.log('Calculated scale needed:', calculatedScale.toFixed(4));
                 
                 // Apply the calculated scale
                 modelEntity.setAttribute('scale', {
@@ -154,12 +156,13 @@
                   z: -center.z * calculatedScale
                 });
                 
-                console.log('Applied scale:', calculatedScale.toFixed(3));
+                console.log('Applied scale:', calculatedScale.toFixed(4));
                 console.log('Applied centering position:', 
-                  (-center.x * calculatedScale).toFixed(3),
-                  (-center.y * calculatedScale).toFixed(3),
-                  (-center.z * calculatedScale).toFixed(3)
+                  (-center.x * calculatedScale).toFixed(4),
+                  (-center.y * calculatedScale).toFixed(4),
+                  (-center.z * calculatedScale).toFixed(4)
                 );
+                console.log('Final model size will be ~2ft x 2ft x 2ft');
                 console.log('======================');
               } else {
                 console.warn('No mesh found in model entity');
