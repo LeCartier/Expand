@@ -1,0 +1,69 @@
+MIT License
+
+Copyright (c) 2025 Could You Elaborate
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+THIRD-PARTY LICENSES AND ATTRIBUTIONS
+================================================================================
+
+This project uses the following open-source libraries and technologies:
+
+1. A-Frame
+   - URL: https://aframe.io
+   - License: MIT License
+   - Copyright (c) 2015-2025 A-Frame Authors
+   - Used for: WebVR/WebXR virtual reality framework
+
+2. AR.js
+   - URL: https://ar-js-org.github.io/AR.js/
+   - License: MIT License
+   - Copyright (c) 2017-2025 AR.js Contributors
+   - Used for: Marker-based augmented reality
+
+3. Model Viewer (Google)
+   - URL: https://modelviewer.dev
+   - License: Apache License 2.0
+   - Copyright (c) 2018-2025 Google LLC
+   - Used for: 3D model viewing and AR Quick Look/Scene Viewer
+
+4. Supabase JavaScript Client
+   - URL: https://supabase.com
+   - License: MIT License
+   - Copyright (c) 2020-2025 Supabase, Inc.
+   - Used for: Backend database and file storage
+
+5. QRCode.js
+   - URL: https://github.com/davidshimjs/qrcodejs
+   - License: MIT License
+   - Copyright (c) 2012 davidshimjs
+   - Used for: QR code generation
+
+6. Three.js (dependency of A-Frame)
+   - URL: https://threejs.org
+   - License: MIT License
+   - Copyright (c) 2010-2025 three.js authors
+   - Used for: 3D graphics rendering
+
+================================================================================
+
+All trademarks and registered trademarks are the property of their respective
+owners. This project is not officially affiliated with or endorsed by any of
+the third-party libraries mentioned above.

@@ -1,8 +1,23 @@
 <!DOCTYPE html>
+<!--
+  Could You Elaborate - v1.0.0
+  
+  Copyright (c) 2025 Could You Elaborate
+  Licensed under the MIT License - see LICENSE file for details
+  
+  Built with:
+  - A-Frame (https://aframe.io) - MIT License
+  - AR.js (https://ar-js-org.github.io/AR.js/) - MIT License
+  - Model Viewer (https://modelviewer.dev) - Apache 2.0 License
+  - Supabase (https://supabase.com) - MIT License
+  - QRCode.js (https://github.com/davidshimjs/qrcodejs) - MIT License
+  
+  See ATTRIBUTIONS.md for complete licensing information.
+-->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>ACC AR QR</title>
+    <title>Could You Elaborate</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
       body {
@@ -12,17 +27,18 @@
         align-items: center;
         justify-content: center;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: radial-gradient(circle at top, #0f172a, #020617);
-        color: #e5e7eb;
+        background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+        color: #ffffff;
       }
       .card {
         text-align: center;
         padding: 1.5rem 1.6rem;
         max-width: 520px;
-        background: rgba(15, 23, 42, 0.96);
+        background: rgba(255, 255, 255, 0.98);
         border-radius: 1.2rem;
-        border: 1px solid rgba(148, 163, 184, 0.5);
-        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.9);
+        border: 2px solid #e5e5e5;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+        color: #1a1a1a;
       }
       h1 {
         margin-top: 0;
@@ -30,7 +46,7 @@
       }
       p {
         font-size: 0.9rem;
-        color: #9ca3af;
+        color: #666666;
       }
       a.button {
         display: inline-flex;
@@ -40,22 +56,52 @@
         padding: 0.6rem 1.2rem;
         border-radius: 999px;
         text-decoration: none;
-        background: radial-gradient(circle at top left, #38bdf8, #2563eb);
-        color: #f9fafb;
+        background: #1a1a1a;
+        color: #ffffff;
         font-size: 0.85rem;
         font-weight: 500;
-        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.7);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        transition: all 0.2s ease;
+      }
+      a.button:hover {
+        background: #000000;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      }
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 0.5rem 1rem;
+        text-align: center;
+        font-size: 0.7rem;
+        color: #999;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+      }
+      footer a {
+        color: #ccc;
+        text-decoration: none;
+      }
+      footer a:hover {
+        color: #fff;
       }
     </style>
   </head>
   <body>
     <div class="card">
-      <h1>ACC AR QR Hub</h1>
+      <h1>Could You Elaborate</h1>
+      <p style="font-size: 0.75rem; color: #999; margin-top: -0.5rem;">v1.0.0</p>
       <p>
         Use the manager to upload GLB / USDZ models and generate QR codes. Anyone scanning a QR will
         open the <code>view.html</code> page and see the model as a miniature in AR.
       </p>
       <a href="app.html" class="button">Open QR Manager</a>
     </div>
+    <footer>
+      Built with <a href="https://aframe.io" target="_blank">A-Frame</a>, <a href="https://ar-js-org.github.io/AR.js/" target="_blank">AR.js</a>, <a href="https://modelviewer.dev" target="_blank">Model Viewer</a> & <a href="https://supabase.com" target="_blank">Supabase</a> • 
+      <a href="LICENSE" target="_blank">MIT License</a> • 
+      <a href="ATTRIBUTIONS.md" target="_blank">Attributions</a>
+    </footer>
   </body>
 </html>
