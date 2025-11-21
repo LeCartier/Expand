@@ -151,60 +151,6 @@ An augmented reality (AR) platform for visualizing 3D models through QR codes. P
 
 ---
 
-## ⚙️ Setup & Installation
-
-### Prerequisites
-- A Supabase account (free tier works)
-- GitHub account (for GitHub Pages hosting)
-- 3D modeling software (Blender, SketchUp, Revit, etc.)
-
-### Quick Start
-
-1. **Create a Supabase Project**
-   ```
-   - Go to https://supabase.com
-   - Create a new project
-   - Note your project URL and anon key
-   ```
-
-2. **Set Up Database**
-   - Create a table named `qr_models` with columns:
-     - `id` (text, primary key)
-     - `owner_user_id` (uuid, references auth.users)
-     - `name` (text)
-     - `glb_url` (text)
-     - `usdz_url` (text)
-     - `source_type` (text)
-     - `created_at` (timestamp)
-
-3. **Configure Storage**
-   - Create a storage bucket named `models`
-   - Set bucket to public
-   - Configure CORS to allow your domain
-
-4. **Update Configuration**
-   - Edit `config.js` with your Supabase credentials:
-   ```javascript
-   window.APP_CONFIG = {
-     SUPABASE_URL: "your-project-url",
-     SUPABASE_ANON_KEY: "your-anon-key",
-     VIEWER_BASE_URL: "https://yourusername.github.io/Expand/view.html"
-   };
-   ```
-
-5. **Deploy to GitHub Pages**
-   - Push code to a GitHub repository
-   - Enable GitHub Pages in repository settings
-   - Set source to main branch
-
-6. **Start Using**
-   - Open `app.html` in your browser
-   - Sign up for an account
-   - Upload your first model
-   - Scan the generated QR code with your phone!
-
----
-
 ## 📖 User Guide
 
 ### Uploading Models
@@ -248,31 +194,6 @@ An augmented reality (AR) platform for visualizing 3D models through QR codes. P
 
 ---
 
-## 🔧 Customization
-
-### Change QR Marker Pattern
-Replace `FFE.patt` with your own marker file from [AR.js Marker Training](https://ar-js-org.github.io/AR.js/three.js/examples/marker-training/examples/generator.html)
-
-### Adjust Model Scale
-Edit `mark-view.html`, change the target size:
-```javascript
-const targetSize = 0.6096; // 2 feet in meters
-```
-
-### Modify Branding
-- Replace `Logo.png` with your logo (will appear in QR codes)
-- Edit CSS colors and styling in each HTML file
-- Update footer links and attribution
-
-### Add Custom Features
-The codebase is modular - extend with:
-- Animation support
-- Multi-model scenes
-- Measurement tools
-- Annotation overlays
-
----
-
 ## 🐛 Troubleshooting
 
 ### Model doesn't appear in AR
@@ -297,19 +218,6 @@ The codebase is modular - extend with:
 - Models auto-scale to 2 feet max dimension
 - Original model scale affects final size
 - Edit scale factor in `mark-view.html` if needed
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! This is an open-source project under the MIT License.
-
-**Areas for improvement:**
-- Multi-language support
-- Advanced AR features (plane detection, lighting estimation)
-- Model analytics (view counts, engagement)
-- Batch QR generation
-- Custom QR styling
 
 ---
 
